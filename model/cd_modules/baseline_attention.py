@@ -191,7 +191,7 @@ def initialize_weights(*models):
                 module.bias.data.zero_()
 
 class BiSRNet(nn.Module):
-    def __init__(self, in_channels=3):
+    def __init__(self):
         super(BiSRNet, self).__init__()
         self.SiamSR = SR(128)
         self.CotSR = CotSR(128)
@@ -263,7 +263,8 @@ class cd_head_v2(nn.Module):
             )
 
         # Final classification head
-        self.classifier = BiSRNet(in_channels=dim_out)
+        # Input channel 'Must' be 128
+        self.classifier = BiSRNet()
 
     def forward(self, feats_A, feats_B):
         # Decoder
