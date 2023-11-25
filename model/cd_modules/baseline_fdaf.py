@@ -83,7 +83,6 @@ class FDAF(nn.Module):
         self.conv_cfg = conv_cfg
         self.norm_cfg = norm_cfg
         self.act_cfg = act_cfg
-        # TODO
         conv_cfg = None
         norm_cfg = dict(type='IN')
         act_cfg = dict(type='GELU')
