@@ -199,7 +199,7 @@ class BiSRNet(nn.Module):
         self.resCD = self._make_layer(ResBlock, 256, 128, 6, stride=1)
         
         self.classifierCD = nn.Sequential(nn.Conv2d(128, 64, kernel_size=1), nn.BatchNorm2d(64), nn.ReLU(), nn.Conv2d(64, 1, kernel_size=1))
-        initialize_weights(self.head, self.SiamSR, self.resCD, self.CotSR, self.classifierCD, self.classifier1, self.classifier2)
+        initialize_weights(self.SiamSR, self.resCD, self.CotSR, self.classifierCD)
     
     def _make_layer(self, block, inplanes, planes, blocks, stride=1):
         downsample = None
