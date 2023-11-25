@@ -263,10 +263,7 @@ class cd_head_v2(nn.Module):
             )
 
         # Final classification head
-        clfr_emb_dim = 64
-        self.clfr_stg1 = nn.Conv2d(dim_out, clfr_emb_dim, kernel_size=3, padding=1)
-        self.clfr_stg2 = nn.Conv2d(clfr_emb_dim, out_channels, kernel_size=3, padding=1)
-        self.relu = nn.ReLU()
+        self.classifier = BiSRNet(in_channels=dim_out)
 
     def forward(self, feats_A, feats_B):
         # Decoder
@@ -279,16 +276,16 @@ class cd_head_v2(nn.Module):
                     f_A = torch.cat((f_A, feats_A[i][self.feat_scales[lvl]]), dim=1)
                     f_B = torch.cat((f_B, feats_B[i][self.feat_scales[lvl]]), dim=1)
     
-                diff = torch.abs( layer(f_A)  - layer(f_B) )
+                f_A, f_B = layer(f_A), layer(f_B)
                 if lvl!=0:
-                    diff = diff + x
+                    f_A, f_B = f_A + f_A_acc, f_B + f_B_acc
                 lvl+=1
             else:
-                diff = layer(diff)
-                x = F.interpolate(diff, scale_factor=2, mode="bilinear")
+                f_A, f_B = layer(f_A), layer(f_B)
+                f_A_acc, f_B_acc = F.interpolate(f_A, scale_factor=2, mode="bilinear"), F.interpolate(f_B, scale_factor=2, mode="bilinear")
 
         # Classifier
-        cm = self.clfr_stg2(self.relu(self.clfr_stg1(x)))
+        cm = self.classifier(f_A_acc, f_B_acc)
 
         return cm
 
