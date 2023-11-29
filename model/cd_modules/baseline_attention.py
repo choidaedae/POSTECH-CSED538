@@ -8,7 +8,6 @@ from model.cd_modules.psp import _PSPModule
 from model.cd_modules.se import ChannelSpatialSELayer
 
 import numpy as np
-from torchvision import models
 
 def get_in_channels(feat_scales, inner_channel, channel_multiplier):
     '''
@@ -277,16 +276,17 @@ class cd_head_v2(nn.Module):
                     f_A = torch.cat((f_A, feats_A[i][self.feat_scales[lvl]]), dim=1)
                     f_B = torch.cat((f_B, feats_B[i][self.feat_scales[lvl]]), dim=1)
     
-                f_A, f_B = layer(f_A), layer(f_B)
+                class_f_A, class_f_B = layer(f_A), layer(f_B)
                 if lvl!=0:
-                    f_A, f_B = f_A + f_A_acc, f_B + f_B_acc
+                    class_f_A, class_f_B = class_f_A + x_A, class_f_B + x_B
                 lvl+=1
             else:
-                f_A, f_B = layer(f_A), layer(f_B)
-                f_A_acc, f_B_acc = F.interpolate(f_A, scale_factor=2, mode="bilinear"), F.interpolate(f_B, scale_factor=2, mode="bilinear")
+                class_f_A, class_f_B = layer(class_f_A), layer(class_f_B)
+                x_A = F.interpolate(class_f_A, scale_factor=2, mode="bilinear")
+                x_B = F.interpolate(class_f_B, scale_factor=2, mode="bilinear")
 
         # Classifier
-        cm = self.classifier(f_A_acc, f_B_acc)
+        cm = self.classifier(x_A, x_B)
 
         return cm
 
