@@ -11,7 +11,7 @@
         "results": "results",
         "checkpoint": "checkpoint",
         //"resume_state": null
-        "resume_state": "experiments/ddpm-RS-Unet_220428_183313/checkpoint/I190000_E97" //"experiments/ddpm-RS-Unet_220425_062858/checkpoint/I60000_E8" //set path to pre-trained diffusion model
+        "resume_state": "DDPM/I190000_E97" //"experiments/ddpm-RS-Unet_220425_062858/checkpoint/I60000_E8" //set path to pre-trained diffusion model
     },
 
     "path_cd": { //set the path 
@@ -28,7 +28,7 @@
             "name": "WHU-CD-256",
             "dataroot": "dataset/WHU-CD-256/",
             "resolution": 256, // high resolution
-            "batch_size": 8,
+            "batch_size": 4,
             "num_workers": 8,
             "use_shuffle": true,
             "data_len": -1 // -1 represents all data used in train
@@ -54,6 +54,9 @@
     },
 
     "model_cd": {
+        "cd_baseline": false,
+        "cd_attention": false, 
+        "cd_fdaf": true, 
         "feat_scales": [2, 5, 8, 11, 14],
         "out_channels": 2,
         "loss_type": "ce",
@@ -127,6 +130,6 @@
         }
     },
     "wandb": {
-        "project": "ddpm-RS-CDHead"
+        "project": "ddpmCD-baseline-WHU"
     }
 }

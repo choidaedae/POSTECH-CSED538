@@ -5,8 +5,12 @@ import torch.nn as nn
 from torch.nn import init
 from torch.nn import modules
 logger = logging.getLogger('base')
-from model.cd_modules.cd_head import cd_head
-from model.cd_modules.cd_head_v2 import cd_head_v2
+# from model.cd_modules.cd_head import cd_head
+# from model.cd_modules.cd_head_v2 import cd_head_v2
+from model.cd_modules.baseline import cd_baseline 
+from model.cd_modules.baseline_fdaf import cd_fdaf
+from model.cd_modules.baseline_attention import cd_attention
+from model.cd_modules.baseline_fdaf_attention import cd_fdaf_attention
 ####################
 # initialize
 ####################
@@ -130,12 +134,41 @@ def define_CD(opt):
     #                 channel_multiplier=diffusion_model_opt['unet']['channel_multiplier'],
     #                 img_size=cd_model_opt['output_cm_size'],
     #                 psp=cd_model_opt['psp'])
-    netCD = cd_head_v2(feat_scales=cd_model_opt['feat_scales'], 
-                    out_channels=cd_model_opt['out_channels'], 
-                    inner_channel=diffusion_model_opt['unet']['inner_channel'], 
-                    channel_multiplier=diffusion_model_opt['unet']['channel_multiplier'],
-                    img_size=cd_model_opt['output_cm_size'],
-                    time_steps=cd_model_opt["t"])
+    
+    if cd_model_opt['cd_baseline']:
+        print("DDPM-CD Baseline")
+        netCD = cd_baseline(feat_scales=cd_model_opt['feat_scales'], 
+                        out_channels=cd_model_opt['out_channels'], 
+                        inner_channel=diffusion_model_opt['unet']['inner_channel'], 
+                        channel_multiplier=diffusion_model_opt['unet']['channel_multiplier'],
+                        img_size=cd_model_opt['output_cm_size'],
+                        time_steps=cd_model_opt["t"])
+    elif cd_model_opt['cd_attention'] and not cd_model_opt['cd_fdaf']:
+        print("DDPM-CD Attention")
+        netCD = cd_attention(feat_scales=cd_model_opt['feat_scales'], 
+                        out_channels=cd_model_opt['out_channels'], 
+                        inner_channel=diffusion_model_opt['unet']['inner_channel'], 
+                        channel_multiplier=diffusion_model_opt['unet']['channel_multiplier'],
+                        img_size=cd_model_opt['output_cm_size'],
+                        time_steps=cd_model_opt["t"])
+        
+    elif cd_model_opt['cd_fdaf'] and not cd_model_opt['cd_attention']:
+        print("DDPM-CD FDAF")
+        netCD = cd_fdaf(feat_scales=cd_model_opt['feat_scales'], 
+                        out_channels=cd_model_opt['out_channels'], 
+                        inner_channel=diffusion_model_opt['unet']['inner_channel'], 
+                        channel_multiplier=diffusion_model_opt['unet']['channel_multiplier'],
+                        img_size=cd_model_opt['output_cm_size'],
+                        time_steps=cd_model_opt["t"])
+        
+    else:
+        print("DDPM-CD Attention FDAF")
+        netCD = cd_fdaf_attention(feat_scales=cd_model_opt['feat_scales'], 
+                        out_channels=cd_model_opt['out_channels'], 
+                        inner_channel=diffusion_model_opt['unet']['inner_channel'], 
+                        channel_multiplier=diffusion_model_opt['unet']['channel_multiplier'],
+                        img_size=cd_model_opt['output_cm_size'],
+                        time_steps=cd_model_opt["t"])
     
     # Initialize the change detection head if it is 'train' phase 
     if opt['phase'] == 'train':

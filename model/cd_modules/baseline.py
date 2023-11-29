@@ -57,13 +57,13 @@ class Block(nn.Module):
         return self.block(x)
 
 
-class cd_head_v2(nn.Module):
+class cd_baseline(nn.Module):
     '''
     Change detection head (version 2).
     '''
 
     def __init__(self, feat_scales, out_channels=2, inner_channel=None, channel_multiplier=None, img_size=256, time_steps=None):
-        super(cd_head_v2, self).__init__()
+        super(cd_baseline, self).__init__()
 
         # Define the parameters of the change detection head
         feat_scales.sort(reverse=True)

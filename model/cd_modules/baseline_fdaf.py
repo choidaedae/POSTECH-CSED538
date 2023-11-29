@@ -125,14 +125,14 @@ class FDAF(nn.Module):
         return output
 
 
-class cd_head_v2(nn.Module):
+class cd_fdaf(nn.Module):
     '''
     Change detection head (version 2).
     '''
 
     def __init__(self, feat_scales, out_channels=2, inner_channel=None, channel_multiplier=None, img_size=256,
                  time_steps=None):
-        super(cd_head_v2, self).__init__()
+        super(cd_fdaf, self).__init__()
 
         # Define the parameters of the change detection head
         feat_scales.sort(reverse=True)
