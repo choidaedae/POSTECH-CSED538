@@ -166,6 +166,7 @@ class BiSRNet(nn.Module):
         self.CotSR = CotSR(128)
         self.classifierCD = nn.Sequential(nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.ReLU(), nn.Conv2d(64, 2, kernel_size=3, padding=1))
         initialize_weights(self.SiamSR, self.CotSR, self.classifierCD)
+        self.downsample = nn.MaxPool2d(2)
     
     def CD_forward(self, x1, x2):
         b,c,h,w = x1.size()
@@ -177,6 +178,7 @@ class BiSRNet(nn.Module):
         x_size = x1.size()
         x1_identity, x2_identity = x1, x2
 
+        x1, x2 = self.downsample(x1), self.downsample(x2)
         x1 = self.SiamSR(x1)
         x2 = self.SiamSR(x2)
         x1, x2 = self.CotSR(x1, x2)
