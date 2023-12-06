@@ -13,17 +13,17 @@ from model.cd_modules.cd_head import cd_head
 from misc.print_diffuse_feats import print_feats
 
 os.environ["CUDA_DEVICE_ORDER"]="PCI_BUS_ID"   
-os.environ["CUDA_VISIBLE_DEVICES"]="6"
+os.environ["CUDA_VISIBLE_DEVICES"]="1"
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--config', type=str, default='config/levir.json',
+    parser.add_argument('-c', '--config', type=str, default='config/whu_attention.json',
                         help='JSON file for configuration')
     parser.add_argument('-p', '--phase', type=str, choices=['train', 'test'],
                         help='Run either train(training + validation) or testing', default='train')
-    parser.add_argument('-gpu', '--gpu_ids', type=str, default="6")
+    parser.add_argument('-gpu', '--gpu_ids', type=str, default="3")
     parser.add_argument('-debug', '-d', action='store_true')
-    parser.add_argument('-enable_wandb', action='store_true')
+    parser.add_argument('-enable_wandb', default=True)
     parser.add_argument('-log_eval', action='store_true')
 
     # parse configs

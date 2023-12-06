@@ -64,6 +64,37 @@ def conv1x1(in_planes, out_planes, stride=1):
 def conv3x3(in_planes, out_planes, stride=1):
     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride, padding=1, bias=False)
 
+class ResBlock(nn.Module):
+    expansion = 1
+
+    def __init__(self, inplanes, planes, stride=1, downsample=None):
+        super(ResBlock, self).__init__()
+        self.conv1 = conv3x3(inplanes, planes, stride)
+        self.bn1 = nn.BatchNorm2d(planes)
+        self.relu = nn.ReLU(inplace=True)
+        self.conv2 = conv3x3(planes, planes)
+        self.bn2 = nn.BatchNorm2d(planes)
+        self.downsample = downsample
+        self.stride = stride
+
+    def forward(self, x):
+        identity = x
+
+        out = self.conv1(x)
+        out = self.bn1(out)
+        out = self.relu(out)
+
+        out = self.conv2(out)
+        out = self.bn2(out)
+
+        if self.downsample is not None:
+            identity = self.downsample(x)
+
+        out += identity
+        out = self.relu(out)
+
+        return out
+
 class SR(nn.Module):
     '''Spatial reasoning module'''
     #codes from DANet 'Dual attention network for scene segmentation'
@@ -164,13 +195,32 @@ class BiSRNet(nn.Module):
         super(BiSRNet, self).__init__()
         self.SiamSR = SR(128)
         self.CotSR = CotSR(128)
+        self.down_conv = nn.Conv2d(256, 128, kernel_size = 3, padding = 1)
+        self.resCD = self._make_layer(ResBlock, 256, 128, 6, stride=1)
         self.classifierCD = nn.Sequential(nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.ReLU(), nn.Conv2d(64, 2, kernel_size=3, padding=1))
-        initialize_weights(self.SiamSR, self.CotSR, self.classifierCD)
-        self.downsample = nn.MaxPool2d(2)
+        initialize_weights(self.SiamSR, self.CotSR, self.down_conv, self.classifierCD)
+        self.downsample = nn.Sequential(nn.MaxPool2d(2), nn.MaxPool2d(2))
+        
+    def _make_layer(self, block, inplanes, planes, blocks, stride=1):
+        downsample = None
+        if stride != 1 or inplanes != planes:
+            downsample = nn.Sequential(
+                conv1x1(inplanes, planes, stride),
+                nn.BatchNorm2d(planes))
+            
+        layers = []
+        layers.append(block(inplanes, planes, stride, downsample))
+        self.inplanes = planes * block.expansion
+        for _ in range(1, blocks):
+            layers.append(block(self.inplanes, planes))
+
+        return nn.Sequential(*layers)
+
     
     def CD_forward(self, x1, x2):
         b,c,h,w = x1.size()
-        x = torch.cat([x1,x2], 1)
+        x = torch.cat([x1, x2], 1)
+        x = self.resCD(x)
         change = self.classifierCD(x)
         return change
     
@@ -191,13 +241,13 @@ class BiSRNet(nn.Module):
         
         return change
 
-class cd_head_v2(nn.Module):
+class cd_attention(nn.Module):
     '''
     Change detection head (version 2).
     '''
 
     def __init__(self, feat_scales, out_channels=2, inner_channel=None, channel_multiplier=None, img_size=256, time_steps=None):
-        super(cd_head_v2, self).__init__()
+        super(cd_attention, self).__init__()
 
         # Define the parameters of the change detection head
         feat_scales.sort(reverse=True)

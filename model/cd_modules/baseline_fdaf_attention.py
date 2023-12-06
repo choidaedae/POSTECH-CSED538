@@ -206,12 +206,12 @@ class BiSRNet(nn.Module):
         super(BiSRNet, self).__init__()
         self.SiamSR = SR(128)
         self.CotSR = CotSR(128)
-
+        self.down_conv = nn.Sequential(nn.Conv2d(256, 128, kernel_size = 3, padding = 1), nn.ReLU(), nn.BatchNorm2d(128))
         self.resCD = self._make_layer(ResBlock, 256, 128, 6, stride=1)
-
         self.classifierCD = nn.Sequential(nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.ReLU(),
                                           nn.Conv2d(64, 2, kernel_size=3, padding=1))
-        initialize_weights(self.SiamSR, self.resCD, self.CotSR, self.classifierCD)
+        initialize_weights(self.SiamSR, self.resCD, self.down_conv, self.CotSR, self.classifierCD)
+        self.downsample = nn.Sequential(nn.MaxPool2d(2), nn.MaxPool2d(2))
 
     def _make_layer(self, block, inplanes, planes, blocks, stride=1):
         downsample = None
@@ -237,12 +237,21 @@ class BiSRNet(nn.Module):
 
     def forward(self, x1, x2):
         x_size = x1.size()
+        x1_identity, x2_identity = x1, x2
+
+        x1, x2 = self.downsample(x1), self.downsample(x2)
         x1 = self.SiamSR(x1)
         x2 = self.SiamSR(x2)
         x1, x2 = self.CotSR(x1, x2)
+        x1 = F.upsample(x1, x_size[2:], mode='bilinear')
+        x2 = F.upsample(x2, x_size[2:], mode='bilinear')
+        
+        x1, x2 = x1 + x1_identity, x2 + x2_identity
+        
         change = self.CD_forward(x1, x2)
 
         return F.upsample(change, x_size[2:], mode='bilinear')
+    
 class FDAF(nn.Module):
     """Flow Dual-Alignment Fusion Module.
 
@@ -307,14 +316,14 @@ class FDAF(nn.Module):
         output = F.grid_sample(x, grid, align_corners=True)
         return output
 
-class cd_head_v2(nn.Module):
+class cd_fdaf_attention(nn.Module):
     '''
     Change detection head (version 2).
     '''
 
     def __init__(self, feat_scales, out_channels=2, inner_channel=None, channel_multiplier=None, img_size=256,
                  time_steps=None):
-        super(cd_head_v2, self).__init__()
+        super(cd_fdaf_attention, self).__init__()
 
         # Define the parameters of the change detection head
         feat_scales.sort(reverse=True)

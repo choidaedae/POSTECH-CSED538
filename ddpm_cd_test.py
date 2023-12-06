@@ -21,7 +21,7 @@ if __name__ == "__main__":
                         help='JSON file for configuration')
     parser.add_argument('-p', '--phase', type=str, choices=['train', 'test'],
                         help='Run either train(training + validation) or testing', default='train')
-    parser.add_argument('-gpu', '--gpu_ids', type=str, default="6")
+    parser.add_argument('-gpu', '--gpu_ids', type=str, default="0")
     parser.add_argument('-debug', '-d', action='store_true')
     parser.add_argument('-enable_wandb', action='store_true')
     parser.add_argument('-log_eval', action='store_true')
